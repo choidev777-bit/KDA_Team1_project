@@ -1,190 +1,128 @@
-"""
-enhancement.py - 무기 강화 기능 모듈
-담당: 최지현
-
-메인 메뉴에서 run_enhancement_menu(state) 를 호출하여 사용합니다.
-state 딕셔너리를 직접 수정한 뒤 반환합니다.
-"""
-
 import random
 
+from game_app.weapon_data import get_equipped_weapon, get_weapon_name, sync_player_weapon
+from game_app.warehouse import equip_weapon
 
-# ──────────────────────────────────────────────
-#  계산 함수들
-# ──────────────────────────────────────────────
 
 def calculate_cost(level):
-    """현재 강화 단계(level)에 따른 강화 비용을 계산합니다.
-
-    비용 = 100 + 현재강화단계 × 80
-    예) +0→+1 : 100G,  +3→+4 : 340G
-    """
     return 100 + level * 80
 
 
 def calculate_success_rate(level):
-    """현재 강화 단계(level)에 따른 성공 확률을 반환합니다 (0~100 정수).
+    rates = {
+        0: 90,
+        1: 80,
+        2: 70,
+        3: 60,
+        4: 50,
+        5: 40,
+        6: 30,
+    }
+    return rates.get(level, 20)
 
-    +0→+1 : 90%
-    +1→+2 : 80%
-    +2→+3 : 70%
-    +3→+4 : 60%
-    +4→+5 : 50%
-    +5 이상 : 10%씩 감소하되 최소 20%
-    """
-    rate = 90 - level * 10
-    return max(rate, 20)
+
+def is_weapon_protected(level):
+    return level <= 5
 
 
-# ──────────────────────────────────────────────
-#  화면 출력 함수들
-# ──────────────────────────────────────────────
-
-def show_weapon_info(state):
-    """현재 무기 상태를 한눈에 보여줍니다."""
+def print_player_weapon(state):
+    sync_player_weapon(state)
     player = state["player"]
-    level = player["weapon_level"]
-    cost = calculate_cost(level)
-    rate = calculate_success_rate(level)
 
-    print()
-    print(f"  현재 무기  : {player['weapon_name']} +{level}")
-    print(f"  현재 골드  : {player['gold']}G")
-    print(f"  최고 기록  : +{player['best_weapon_level']}")
-    print(f"  강화 비용  : {cost}G")
-    print(f"  성공 확률  : {rate}%")
+    print(f"현재 무기: {player['weapon_name']} +{player['weapon_level']}")
+    print(f"현재 골드: {player['gold']}")
+    print(f"최고 강화 단계: +{player['best_weapon_level']}")
 
 
-def show_enhancement_table():
-    """강화 단계별 비용·확률 표를 출력합니다."""
-    print()
-    print("  ┌──────────────┬─────────┬───────────┐")
-    print("  │   강화 단계   │  비용   │ 성공 확률  │")
-    print("  ├──────────────┼─────────┼───────────┤")
-    for lv in range(11):
-        cost = calculate_cost(lv)
-        rate = calculate_success_rate(lv)
-        label = f"+{lv} → +{lv + 1}"
-        print(f"  │  {label:<11} │ {cost:>5}G  │   {rate:>3}%     │")
-    print("  └──────────────┴─────────┴───────────┘")
-    print()
+def show_enhancement_info(state):
+    weapon = get_equipped_weapon(state)
 
-
-# ──────────────────────────────────────────────
-#  핵심 강화 로직
-# ──────────────────────────────────────────────
-
-def try_enhance(state):
-    """강화를 한 번 시도합니다.
-
-    1) 골드 부족 → 강화 불가 안내
-    2) 골드 차감
-    3) 성공/실패 판정
-       - 성공 : weapon_level +1, best_weapon_level 갱신
-       - 실패 : weapon_level → 0
-    """
-    player = state["player"]
-    level = player["weapon_level"]
-    cost = calculate_cost(level)
-    rate = calculate_success_rate(level)
-
-    # 골드 부족 확인
-    if player["gold"] < cost:
-        print()
-        print(f"  [!] 골드가 부족합니다! (필요: {cost}G / 보유: {player['gold']}G)")
+    if weapon is None:
+        print("강화할 무기가 없습니다.")
         return
 
-    # 골드 차감 (먼저 지불)
-    player["gold"] -= cost
-
-    # 성공·실패 판정 (1~100 사이 난수)
-    roll = random.randint(1, 100)
-    success = roll <= rate
+    cost = calculate_cost(weapon["level"])
+    success_rate = calculate_success_rate(weapon["level"])
 
     print()
-    if success:
-        player["weapon_level"] += 1
-        # 최고 기록 갱신
-        if player["weapon_level"] > player["best_weapon_level"]:
-            player["best_weapon_level"] = player["weapon_level"]
-        print(f"  [성공] 강화 성공! "
-              f"{player['weapon_name']} +{level} -> +{player['weapon_level']}")
+    print("===== 강화 정보 =====")
+    print(f"현재 무기: {get_weapon_name(weapon)} +{weapon['level']}")
+    print(f"강화 비용: {cost}")
+    print(f"성공 확률: {success_rate}%")
+    print("성공하면 강화 단계가 1 올라갑니다.")
+
+    if is_weapon_protected(weapon["level"]):
+        print("+5 이하 무기는 실패해도 강화 단계가 유지됩니다.")
     else:
-        player["weapon_level"] = 0
-        print(f"  [실패] 강화 실패...  "
-              f"{player['weapon_name']} +{level} -> +0  (초기화)")
-
-    print(f"      비용: -{cost}G  |  남은 골드: {player['gold']}G")
+        print("+6 이상 무기는 실패하면 강화 단계가 +0으로 초기화됩니다.")
 
 
-# ──────────────────────────────────────────────
-#  메인 메뉴에서 호출되는 진입 함수
-# ──────────────────────────────────────────────
+def try_enhance(state):
+    weapon = get_equipped_weapon(state)
 
-def run_enhancement_menu(state):
-    """무기 강화 메뉴를 반복 실행합니다.
+    if weapon is None:
+        print("강화할 무기가 없습니다.")
+        return state
 
-    사용자가 '3. 메인 메뉴로 돌아가기'를 선택하면
-    변경된 state를 반환합니다.
-    """
-    while True:
-        print()
-        print("========== [ 무기 강화 ] ==========")
-        show_weapon_info(state)
-        print()
-        print("  1. 강화 시도")
-        print("  2. 강화 정보 보기")
-        print("  3. 메인 메뉴로 돌아가기")
-        print()
+    player = state["player"]
+    cost = calculate_cost(weapon["level"])
+    success_rate = calculate_success_rate(weapon["level"])
 
-        choice = input("  선택> ").strip()
+    print()
+    print("===== 강화 시도 =====")
+    print(f"현재 무기: {get_weapon_name(weapon)} +{weapon['level']}")
+    print(f"현재 골드: {player['gold']}")
+    print(f"강화 비용: {cost}")
+    print(f"성공 확률: {success_rate}%")
 
-        if choice == "1":
-            try_enhance(state)
-        elif choice == "2":
-            show_enhancement_table()
-        elif choice == "3":
-            print()
-            print("  메인 메뉴로 돌아갑니다.")
-            break
+    if player["gold"] < cost:
+        print("골드가 부족해서 강화할 수 없습니다.")
+        return state
+
+    player["gold"] -= cost
+    result_number = random.randint(1, 100)
+
+    if result_number <= success_rate:
+        weapon["level"] += 1
+        print("강화 성공!")
+        print(f"{get_weapon_name(weapon)} +{weapon['level']}이(가) 되었습니다.")
+    else:
+        print("강화 실패!")
+        if is_weapon_protected(weapon["level"]):
+            print("+5 이하 보호 효과로 강화 단계가 유지됩니다.")
         else:
-            print()
-            print("  [!] 잘못된 입력입니다. 1, 2, 3 중에서 선택해주세요.")
+            weapon["level"] = 0
+            print("무기 강화 단계가 +0으로 초기화되었습니다.")
+
+    sync_player_weapon(state)
+    print(f"남은 골드: {player['gold']}")
 
     return state
 
 
-# ──────────────────────────────────────────────
-#  단독 테스트 (이 파일만 직접 실행할 때)
-# ──────────────────────────────────────────────
+def run_enhancement_menu(state):
+    sync_player_weapon(state)
 
-if __name__ == "__main__":
-    test_state = {
-        "player": {
-            "nickname": "테스트유저",
-            "gold": 1000,
-            "weapon_name": "기본 검",
-            "weapon_level": 0,
-            "best_weapon_level": 0
-        },
-        "battle": {
-            "win": 0,
-            "lose": 0,
-            "logs": []
-        },
-        "raid": {
-            "cleared_stage": 0,
-            "logs": []
-        }
-    }
+    while True:
+        print()
+        print("===== 무기 강화 =====")
+        print_player_weapon(state)
+        print()
+        print("1. 강화 시도")
+        print("2. 강화할 무기 선택")
+        print("3. 강화 정보 보기")
+        print("4. 메인 메뉴로 돌아가기")
 
-    print("=" * 40)
-    print("  enhancement.py 단독 테스트 모드")
-    print("=" * 40)
+        choice = input("번호를 선택하세요: ").strip()
 
-    result = run_enhancement_menu(test_state)
-
-    print()
-    print("── 테스트 종료 후 플레이어 상태 ──")
-    for key, value in result["player"].items():
-        print(f"  {key}: {value}")
+        if choice == "1":
+            state = try_enhance(state)
+        elif choice == "2":
+            state = equip_weapon(state)
+        elif choice == "3":
+            show_enhancement_info(state)
+        elif choice == "4":
+            print("메인 메뉴로 돌아갑니다.")
+            return state
+        else:
+            print("잘못된 입력입니다. 1, 2, 3, 4 중에서 선택해주세요.")
