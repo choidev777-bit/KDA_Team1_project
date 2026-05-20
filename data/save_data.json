@@ -2,7 +2,7 @@
   "player": {
     "nickname": "player",
     "gold": 1000,
-    "weapon_name": "기본 검",
+    "weapon_name": "철검",
     "weapon_level": 0,
     "best_weapon_level": 0
   },
@@ -14,5 +14,16 @@
   "raid": {
     "cleared_stage": 0,
     "logs": []
+  },
+  "inventory": {
+    "equipped_weapon_id": "weapon_1",
+    "weapons": [
+      {
+        "id": "weapon_1",
+        "route_id": "iron_sword",
+        "type": "검",
+        "level": 0
+      }
+    ]
   }
 }
