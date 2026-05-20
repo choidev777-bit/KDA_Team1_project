@@ -31,6 +31,9 @@ DEFAULT_STATE = {
             }
         ],
     },
+    "settings": {
+        "intro_seen": False,
+    },
 }
 
 

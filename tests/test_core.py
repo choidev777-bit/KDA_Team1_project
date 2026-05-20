@@ -21,6 +21,7 @@ class GameStateTests(unittest.TestCase):
         self.assertEqual(state["player"]["best_weapon_level"], 0)
         self.assertEqual(state["inventory"]["equipped_weapon_id"], "weapon_1")
         self.assertEqual(len(state["inventory"]["weapons"]), 1)
+        self.assertFalse(state["settings"]["intro_seen"])
 
     def test_create_default_state_returns_independent_data(self):
         first_state = create_default_state()
@@ -44,8 +45,9 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(state["player"]["gold"], 1000)
             self.assertEqual(state["raid"]["cleared_stage"], 0)
             self.assertEqual(len(state["inventory"]["weapons"]), 1)
+            self.assertFalse(state["settings"]["intro_seen"])
 
-    def test_load_state_adds_inventory_to_old_save_data(self):
+    def test_load_state_adds_new_sections_to_old_save_data(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             save_path = Path(temp_dir) / "save_data.json"
             old_state = {
@@ -69,6 +71,7 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(state["inventory"]["weapons"][0]["level"], 2)
             self.assertEqual(state["player"]["weapon_name"], "철검")
             self.assertEqual(state["player"]["weapon_level"], 2)
+            self.assertFalse(state["settings"]["intro_seen"])
 
     def test_save_state_round_trips_json_data(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -87,13 +90,25 @@ class StorageTests(unittest.TestCase):
 
 
 class GameAppTests(unittest.TestCase):
+    def test_first_run_intro_sets_nickname(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            save_path = Path(temp_dir) / "save_data.json"
+            app = GameApp(save_path=save_path)
+
+            with patch("builtins.input", return_value="민기"):
+                with patch("builtins.print"):
+                    app.show_intro_if_needed()
+
+            self.assertEqual(app.state["player"]["nickname"], "민기")
+            self.assertTrue(app.state["settings"]["intro_seen"])
+
     def test_exit_menu_choice_saves_state_and_stops_app(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             save_path = Path(temp_dir) / "save_data.json"
             app = GameApp(save_path=save_path)
 
             with patch("builtins.print"):
-                should_continue = app.handle_menu_choice("8")
+                should_continue = app.handle_menu_choice("5")
 
             self.assertFalse(should_continue)
             self.assertTrue(save_path.exists())

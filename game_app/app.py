@@ -1,4 +1,4 @@
-from game_app import battle, enhancement, raid, ranking, shop, warehouse
+from game_app import battle, enhancement, raid
 from game_app.storage import DEFAULT_SAVE_PATH, load_state, save_state
 from game_app.weapon_data import sync_player_weapon
 
@@ -9,12 +9,33 @@ class GameApp:
         self.state = load_state(self.save_path)
 
     def run(self):
+        self.show_intro_if_needed()
         running = True
 
         while running:
             self.show_main_menu()
             choice = input("메뉴 번호를 선택하세요: ").strip()
             running = self.handle_menu_choice(choice)
+
+    def show_intro_if_needed(self):
+        settings = self.state["settings"]
+
+        if settings["intro_seen"]:
+            return
+
+        print()
+        print("===== 무기 강화 RPG =====")
+        print("상점에서 무기를 사고, 강화해서 더 강해지는 터미널 RPG입니다.")
+        print("일반 전투로 골드를 벌고, 강해진 무기로 보스 레이드에 도전하세요.")
+        print("창고에서는 내가 가진 무기를 확인하고 장착할 수 있습니다.")
+        print()
+
+        nickname = input("닉네임을 입력하세요: ").strip()
+        if nickname:
+            self.state["player"]["nickname"] = nickname
+
+        settings["intro_seen"] = True
+        save_state(self.state, self.save_path)
 
     def show_main_menu(self):
         print()
@@ -23,10 +44,7 @@ class GameApp:
         print("2. 무기 강화")
         print("3. 일반 전투")
         print("4. 보스 레이드")
-        print("5. 랭킹/기록 보기")
-        print("6. 상점")
-        print("7. 창고")
-        print("8. 저장하고 종료")
+        print("5. 게임 종료")
 
     def handle_menu_choice(self, choice):
         if choice == "1":
@@ -45,22 +63,11 @@ class GameApp:
             save_state(self.state, self.save_path)
             return True
         if choice == "5":
-            self.state = ranking.show_records(self.state)
-            return True
-        if choice == "6":
-            self.state = shop.run_shop_menu(self.state)
-            save_state(self.state, self.save_path)
-            return True
-        if choice == "7":
-            self.state = warehouse.run_warehouse_menu(self.state)
-            save_state(self.state, self.save_path)
-            return True
-        if choice == "8":
             save_state(self.state, self.save_path)
             print("게임 데이터를 저장했습니다. 프로그램을 종료합니다.")
             return False
 
-        print("잘못된 입력입니다. 1부터 8까지의 숫자를 입력해주세요.")
+        print("잘못된 입력입니다. 1부터 5까지의 숫자를 입력해주세요.")
         return True
 
     def show_profile(self):

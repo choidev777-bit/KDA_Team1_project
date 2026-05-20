@@ -1,5 +1,6 @@
 import random
 
+from game_app import shop, warehouse
 from game_app.weapon_data import get_equipped_weapon, get_weapon_name, sync_player_weapon
 from game_app.warehouse import equip_weapon
 
@@ -111,7 +112,9 @@ def run_enhancement_menu(state):
         print("1. 강화 시도")
         print("2. 강화할 무기 선택")
         print("3. 강화 정보 보기")
-        print("4. 메인 메뉴로 돌아가기")
+        print("4. 상점")
+        print("5. 창고")
+        print("6. 메인 메뉴로 돌아가기")
 
         choice = input("번호를 선택하세요: ").strip()
 
@@ -122,7 +125,13 @@ def run_enhancement_menu(state):
         elif choice == "3":
             show_enhancement_info(state)
         elif choice == "4":
+            state = shop.run_shop_menu(state)
+            sync_player_weapon(state)
+        elif choice == "5":
+            state = warehouse.run_warehouse_menu(state)
+            sync_player_weapon(state)
+        elif choice == "6":
             print("메인 메뉴로 돌아갑니다.")
             return state
         else:
-            print("잘못된 입력입니다. 1, 2, 3, 4 중에서 선택해주세요.")
+            print("잘못된 입력입니다. 1, 2, 3, 4, 5, 6 중에서 선택해주세요.")

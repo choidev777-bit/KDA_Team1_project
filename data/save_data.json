@@ -25,5 +25,8 @@
         "level": 0
       }
     ]
+  },
+  "settings": {
+    "intro_seen": false
   }
 }
