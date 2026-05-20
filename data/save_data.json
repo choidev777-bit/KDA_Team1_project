@@ -1,0 +1,18 @@
+{
+  "player": {
+    "nickname": "player",
+    "gold": 1000,
+    "weapon_name": "기본 검",
+    "weapon_level": 0,
+    "best_weapon_level": 0
+  },
+  "battle": {
+    "win": 0,
+    "lose": 0,
+    "logs": []
+  },
+  "raid": {
+    "cleared_stage": 0,
+    "logs": []
+  }
+}
