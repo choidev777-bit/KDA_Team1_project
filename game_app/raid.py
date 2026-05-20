@@ -20,9 +20,39 @@ def get_bosses():
         },
         {
             "stage": 4,
-            "name": "드래곤",
+            "name": "저주받은 마법사",
             "required_level": 8,
             "reward": 2000,
+        },
+        {
+            "stage": 5,
+            "name": "불꽃 거인",
+            "required_level": 11,
+            "reward": 3000,
+        },
+        {
+            "stage": 6,
+            "name": "얼음 여왕",
+            "required_level": 13,
+            "reward": 4200,
+        },
+        {
+            "stage": 7,
+            "name": "심연의 기사",
+            "required_level": 16,
+            "reward": 5800,
+        },
+        {
+            "stage": 8,
+            "name": "고대 드래곤",
+            "required_level": 18,
+            "reward": 7500,
+        },
+        {
+            "stage": 9,
+            "name": "마왕",
+            "required_level": 20,
+            "reward": 10000,
         },
     ]
 
