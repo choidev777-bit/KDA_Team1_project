@@ -1,5 +1,6 @@
-from game_app import battle, enhancement, raid, ranking
+from game_app import battle, enhancement, raid, ranking, shop, warehouse
 from game_app.storage import DEFAULT_SAVE_PATH, load_state, save_state
+from game_app.weapon_data import sync_player_weapon
 
 
 class GameApp:
@@ -23,7 +24,9 @@ class GameApp:
         print("3. 일반 전투")
         print("4. 보스 레이드")
         print("5. 랭킹/기록 보기")
-        print("6. 저장하고 종료")
+        print("6. 상점")
+        print("7. 창고")
+        print("8. 저장하고 종료")
 
     def handle_menu_choice(self, choice):
         if choice == "1":
@@ -45,23 +48,35 @@ class GameApp:
             self.state = ranking.show_records(self.state)
             return True
         if choice == "6":
+            self.state = shop.run_shop_menu(self.state)
+            save_state(self.state, self.save_path)
+            return True
+        if choice == "7":
+            self.state = warehouse.run_warehouse_menu(self.state)
+            save_state(self.state, self.save_path)
+            return True
+        if choice == "8":
             save_state(self.state, self.save_path)
             print("게임 데이터를 저장했습니다. 프로그램을 종료합니다.")
             return False
 
-        print("잘못된 입력입니다. 1부터 6까지의 숫자를 입력해주세요.")
+        print("잘못된 입력입니다. 1부터 8까지의 숫자를 입력해주세요.")
         return True
 
     def show_profile(self):
+        sync_player_weapon(self.state)
+
         player = self.state["player"]
         battle_state = self.state["battle"]
         raid_state = self.state["raid"]
+        weapon_count = len(self.state["inventory"]["weapons"])
 
         print()
         print("===== 프로필 =====")
         print(f"닉네임: {player['nickname']}")
         print(f"골드: {player['gold']}")
-        print(f"무기: {player['weapon_name']} +{player['weapon_level']}")
+        print(f"장착 무기: {player['weapon_name']} +{player['weapon_level']}")
+        print(f"보유 무기 수: {weapon_count}")
         print(f"최고 강화 단계: +{player['best_weapon_level']}")
         print(f"일반 전투: {battle_state['win']}승 {battle_state['lose']}패")
         print(f"보스 레이드 클리어 단계: {raid_state['cleared_stage']}단계")
