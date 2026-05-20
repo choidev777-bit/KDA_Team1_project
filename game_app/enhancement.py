@@ -9,19 +9,20 @@ def calculate_cost(level):
 
 
 def calculate_success_rate(level):
-    if level == 0:
-        return 90
-    if level == 1:
-        return 80
-    if level == 2:
-        return 70
-    if level == 3:
-        return 60
-    if level == 4:
-        return 50
+    rates = {
+        0: 90,
+        1: 80,
+        2: 70,
+        3: 60,
+        4: 50,
+        5: 40,
+        6: 30,
+    }
+    return rates.get(level, 20)
 
-    rate = 50 - (level - 4) * 5
-    return max(rate, 20)
+
+def is_weapon_protected(level):
+    return level <= 5
 
 
 def print_player_weapon(state):
@@ -49,7 +50,11 @@ def show_enhancement_info(state):
     print(f"강화 비용: {cost}")
     print(f"성공 확률: {success_rate}%")
     print("성공하면 강화 단계가 1 올라갑니다.")
-    print("실패하면 해당 무기의 강화 단계가 0으로 초기화됩니다.")
+
+    if is_weapon_protected(weapon["level"]):
+        print("+5 이하 무기는 실패해도 강화 단계가 유지됩니다.")
+    else:
+        print("+6 이상 무기는 실패하면 강화 단계가 +0으로 초기화됩니다.")
 
 
 def try_enhance(state):
@@ -82,9 +87,12 @@ def try_enhance(state):
         print("강화 성공!")
         print(f"{get_weapon_name(weapon)} +{weapon['level']}이(가) 되었습니다.")
     else:
-        weapon["level"] = 0
         print("강화 실패!")
-        print("무기 강화 단계가 +0으로 초기화되었습니다.")
+        if is_weapon_protected(weapon["level"]):
+            print("+5 이하 보호 효과로 강화 단계가 유지됩니다.")
+        else:
+            weapon["level"] = 0
+            print("무기 강화 단계가 +0으로 초기화되었습니다.")
 
     sync_player_weapon(state)
     print(f"남은 골드: {player['gold']}")
